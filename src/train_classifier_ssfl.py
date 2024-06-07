@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser(description='cfg')
 for k in cfg:
     exec('parser.add_argument(\'--{0}\', default=cfg[\'{0}\'], type=type(cfg[\'{0}\']))'.format(k))
 parser.add_argument('--control_name', default=None, type=str)
+
 args = vars(parser.parse_args())
 process_args(args)
 
@@ -74,12 +75,18 @@ def runExperiment():
         else:
             server = make_server(model)
             client = make_client(model, data_split)
-            logger = make_logger(os.path.join('output', 'runs', 'train_{}'.format(cfg['model_tag'])))
+            if 'output_root_dir' in cfg:
+                logger = make_logger(os.path.join(cfg['output_root_dir'], 'runs', 'train_{}'.format(cfg['model_tag'])))
+            else:
+                logger = make_logger(os.path.join('output', 'runs', 'train_{}'.format(cfg['model_tag'])))
     else:
         last_epoch = 1
         server = make_server(model)
         client = make_client(model, data_split)
-        logger = make_logger(os.path.join('output', 'runs', 'train_{}'.format(cfg['model_tag'])))
+        if 'output_root_dir' in cfg:
+            logger = make_logger(os.path.join(cfg['output_root_dir'], 'runs', 'train_{}'.format(cfg['model_tag'])))
+        else:
+            logger = make_logger(os.path.join('output', 'runs', 'train_{}'.format(cfg['model_tag'])))
     for epoch in range(last_epoch, cfg['global']['num_epochs'] + 1):
         train_client(batchnorm_dataset, client_dataset['train'], server, client, optimizer, metric, logger, epoch)
         if 'ft' in cfg and cfg['ft'] == 0:
