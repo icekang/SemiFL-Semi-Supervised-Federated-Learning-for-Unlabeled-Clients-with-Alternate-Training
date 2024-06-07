@@ -262,7 +262,7 @@ def make_scheduler(optimizer, tag):
         raise ValueError('Not valid scheduler name')
     return scheduler
 
-def get_output_root_dir(*args):
+def get_output_root_dir(*args, **kwargs):
     if 'output_root_dir' in cfg:
         return cfg['output_root_dir']
     else:
