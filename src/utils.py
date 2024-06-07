@@ -262,16 +262,21 @@ def make_scheduler(optimizer, tag):
         raise ValueError('Not valid scheduler name')
     return scheduler
 
+def get_output_root_dir(cfg):
+    if 'output_root_dir' in cfg:
+        return cfg['output_root_dir']
+    else:
+        return 'output'
 
 def resume(model_tag, load_tag='checkpoint', verbose=True):
-    if os.path.exists('./output/model/{}_{}.pt'.format(model_tag, load_tag)):
-        result = load('./output/model/{}_{}.pt'.format(model_tag, load_tag))
+    if os.path.exists('./{}/model/{}_{}.pt'.format(get_output_root_dir(), model_tag, load_tag)):
+        result = load('./{}/model/{}_{}.pt'.format(get_output_root_dir(), model_tag, load_tag))
     else:
         print('Not exists model tag: {}, start from scratch'.format(model_tag))
         from datetime import datetime
         from logger import Logger
         last_epoch = 1
-        logger_path = 'output/runs/train_{}_{}'.format(cfg['model_tag'], datetime.now().strftime('%b%d_%H-%M-%S'))
+        logger_path = '{}/runs/train_{}_{}'.format(get_output_root_dir(), cfg['model_tag'], datetime.now().strftime('%b%d_%H-%M-%S'))
         logger = Logger(logger_path)
         result = {'epoch': last_epoch, 'logger': logger}
     if verbose:
