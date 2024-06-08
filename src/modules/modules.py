@@ -430,8 +430,6 @@ class AdaptiveServer:
     # python train_classifier_adaptive_ssfl.py --output_root_dir output_adaptive/ --data_name CIFAR10 --model_name wresnet28x2 --control_name 250_fix@0.95_5_1_non-iid-d-0.3_5-5_0.5_0_1
     def __init__(self, model):
         self.model_state_dict = save_model_state_dict(model.state_dict())
-        cfg['global']['optimizer_name'] = 'Adam'
-        cfg['global']['betas'] = [0.9, 0.99]
         if 'fmatch' in cfg['loss_mode']:
             optimizer = make_optimizer(model.make_sigma_parameters(), 'local')
             global_optimizer = make_optimizer(model.make_phi_parameters(), 'global')
@@ -459,11 +457,7 @@ class AdaptiveServer:
                 if len(valid_client) > 0:
                     model = eval('models.{}()'.format(cfg['model_name']))
                     model.load_state_dict(self.model_state_dict) # copy sever model to a new model
-
-                    cfg['global']['optimizer_name'] = 'Adam'
-                    cfg['global']['betas'] = [0.9, 0.99]
                     global_optimizer = make_optimizer(model.parameters(), 'global')
-
                     global_optimizer.load_state_dict(self.global_optimizer_state_dict)
                     global_optimizer.zero_grad()
                     weight = torch.ones(len(valid_client))

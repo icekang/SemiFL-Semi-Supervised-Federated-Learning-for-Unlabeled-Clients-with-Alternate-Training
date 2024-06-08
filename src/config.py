@@ -7,6 +7,10 @@ if 'cfg' not in globals():
 
 
 def process_args(args):
+    if 'config_file' in args:
+        with open(args['config_file'], 'r') as f:
+            cfg = yaml.load(f, Loader=yaml.FullLoader)
+
     for k in cfg:
         cfg[k] = args[k]
     if 'control_name' in args and args['control_name'] is not None:

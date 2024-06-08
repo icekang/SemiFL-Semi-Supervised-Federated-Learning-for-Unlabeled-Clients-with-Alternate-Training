@@ -157,16 +157,17 @@ def process_control():
         cfg['local']['momentum'] = 0.9
         cfg['local']['weight_decay'] = 5e-4
         cfg['local']['nesterov'] = True
-        cfg['global'] = {}
-        cfg['global']['batch_size'] = {'train': 250, 'test': 250}
-        cfg['global']['shuffle'] = {'train': True, 'test': False}
-        cfg['global']['num_epochs'] = 800
-        cfg['global']['optimizer_name'] = 'SGD'
-        cfg['global']['lr'] = 1
-        cfg['global']['momentum'] = cfg['gm']
-        cfg['global']['weight_decay'] = 0
-        cfg['global']['nesterov'] = False
-        cfg['global']['scheduler_name'] = 'CosineAnnealingLR'
+        if 'global' not in cfg:
+            cfg['global'] = {}
+            cfg['global']['batch_size'] = {'train': 250, 'test': 250}
+            cfg['global']['shuffle'] = {'train': True, 'test': False}
+            cfg['global']['num_epochs'] = 800
+            cfg['global']['optimizer_name'] = 'SGD'
+            cfg['global']['lr'] = 1
+            cfg['global']['momentum'] = cfg['gm']
+            cfg['global']['weight_decay'] = 0
+            cfg['global']['nesterov'] = False
+            cfg['global']['scheduler_name'] = 'CosineAnnealingLR'
         cfg['alpha'] = 0.75
     else:
         model_name = cfg['model_name']
