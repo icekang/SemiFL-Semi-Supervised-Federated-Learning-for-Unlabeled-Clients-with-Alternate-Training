@@ -455,8 +455,11 @@ class AdaptiveServer:
                 if len(valid_client) > 0:
                     model = eval('models.{}()'.format(cfg['model_name']))
                     model.load_state_dict(self.model_state_dict) # copy sever model to a new model
+
                     cfg['global']['optimizer_name'] = 'Adam'
+                    cfg['global']['betas'] = [0.9, 0.99]
                     global_optimizer = make_optimizer(model.parameters(), 'global')
+
                     global_optimizer.load_state_dict(self.global_optimizer_state_dict)
                     global_optimizer.zero_grad()
                     weight = torch.ones(len(valid_client))
