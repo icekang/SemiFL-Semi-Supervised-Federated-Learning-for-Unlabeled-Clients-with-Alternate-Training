@@ -14,6 +14,7 @@ from metrics import Accuracy
 
 
 class Server:
+    # python train_classifier_ssfl.py --data_name CIFAR10 --model_name wresnet28x2 --control_name 250_fix@0.95_5_1_non-iid-d-0.3_5-5_0.5_0_1 --resume_mode=1
     def __init__(self, model):
         self.model_state_dict = save_model_state_dict(model.state_dict())
         if 'fmatch' in cfg['loss_mode']:
@@ -426,8 +427,11 @@ def save_optimizer_state_dict(optimizer_state_dict):
     return optimizer_state_dict_
 
 class AdaptiveServer:
+    # python train_classifier_adaptive_ssfl.py --output_root_dir output_adaptive/ --data_name CIFAR10 --model_name wresnet28x2 --control_name 250_fix@0.95_5_1_non-iid-d-0.3_5-5_0.5_0_1
     def __init__(self, model):
         self.model_state_dict = save_model_state_dict(model.state_dict())
+        cfg['global']['optimizer_name'] = 'Adam'
+        cfg['global']['betas'] = [0.9, 0.99]
         if 'fmatch' in cfg['loss_mode']:
             optimizer = make_optimizer(model.make_sigma_parameters(), 'local')
             global_optimizer = make_optimizer(model.make_phi_parameters(), 'global')
