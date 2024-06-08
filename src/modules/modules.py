@@ -454,20 +454,21 @@ class AdaptiveServer:
                 valid_client = [client[i] for i in range(len(client)) if client[i].active]
                 if len(valid_client) > 0:
                     model = eval('models.{}()'.format(cfg['model_name']))
-                    model.load_state_dict(self.model_state_dict)
+                    model.load_state_dict(self.model_state_dict) # copy sever model to a new model
+                    cfg['global']['optimizer_name'] = 'Adam'
                     global_optimizer = make_optimizer(model.parameters(), 'global')
                     global_optimizer.load_state_dict(self.global_optimizer_state_dict)
                     global_optimizer.zero_grad()
                     weight = torch.ones(len(valid_client))
-                    weight = weight / weight.sum()
+                    weight = weight / weight.sum() # weight = 1/num_valid_client
                     for k, v in model.named_parameters():
                         parameter_type = k.split('.')[-1]
                         if 'weight' in parameter_type or 'bias' in parameter_type:
-                            tmp_v = v.data.new_zeros(v.size())
+                            tmp_v = v.data.new_zeros(v.size()) # create a tensor of zeros with the same size as v
                             for m in range(len(valid_client)):
-                                tmp_v += weight[m] * valid_client[m].model_state_dict[k]
-                            v.grad = (v.data - tmp_v).detach()
-                    global_optimizer.step()
+                                tmp_v += weight[m] * (v.data - valid_client[m].model_state_dict[k]).detach()
+                            v.grad = tmp_v # model weight  - average of client weight
+                    global_optimizer.step() # update the global model with a "gradient" of the difference between the server model and the average of the client models
                     self.global_optimizer_state_dict = save_optimizer_state_dict(global_optimizer.state_dict())
                     self.model_state_dict = save_model_state_dict(model.state_dict())
         elif 'fmatch' in cfg['loss_mode']:
