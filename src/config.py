@@ -5,14 +5,16 @@ if 'cfg' not in globals():
     with open('config.yml', 'r') as f:
         cfg = yaml.load(f, Loader=yaml.FullLoader)
 
-
 def process_args(args):
-    if 'config_file' in args:
-        with open(args['config_file'], 'r') as f:
-            cfg = yaml.load(f, Loader=yaml.FullLoader)
-
     for k in cfg:
         cfg[k] = args[k]
+
+    if 'config_file' in args:
+        with open(args['config_file'], 'r') as f:
+            _cfg = yaml.load(f, Loader=yaml.FullLoader)    
+        for k in _cfg:
+            cfg[k] = _cfg[k]
+
     if 'control_name' in args and args['control_name'] is not None:
         control_name_list = args['control_name'].split('_')
         control_keys_list = list(cfg['control'].keys())

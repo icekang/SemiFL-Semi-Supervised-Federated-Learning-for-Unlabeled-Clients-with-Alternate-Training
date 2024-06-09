@@ -157,7 +157,7 @@ def process_control():
         cfg['local']['momentum'] = 0.9
         cfg['local']['weight_decay'] = 5e-4
         cfg['local']['nesterov'] = True
-        if 'global' not in cfg:
+        if 'global' not in cfg or cfg['global'] is None:
             cfg['global'] = {}
             cfg['global']['batch_size'] = {'train': 250, 'test': 250}
             cfg['global']['shuffle'] = {'train': True, 'test': False}

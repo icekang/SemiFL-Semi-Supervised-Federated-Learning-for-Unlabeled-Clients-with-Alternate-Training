@@ -69,7 +69,7 @@ def test(data_loader, model, metric, logger, epoch):
             logger.append(evaluation, 'test', input_size)
         info = {'info': ['Model: {}'.format(cfg['model_tag']), 'Test Epoch: {}({:.0f}%)'.format(epoch, 100.)]}
         logger.append(info, 'test', mean=False)
-        print(logger.write('test', metric.metric_name['test']))
+        print(logger.write('test', metric.metric_name['test']), flush=True)
     return
 
 

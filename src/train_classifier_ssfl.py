@@ -153,7 +153,7 @@ def train_client(batchnorm_dataset, client_dataset, server, client, optimizer, m
                              'Epoch Finished Time: {}'.format(epoch_finished_time),
                              'Experiment Finished Time: {}'.format(exp_finished_time)]}
             logger.append(info, 'train', mean=False)
-            print(logger.write('train', metric.metric_name['train']))
+            print(logger.write('train', metric.metric_name['train']), flush=True)
     logger.safe(False)
     return
 
@@ -189,7 +189,7 @@ def test(data_loader, model, metric, logger, epoch):
             logger.append(evaluation, 'test', input_size)
         info = {'info': ['Model: {}'.format(cfg['model_tag']), 'Test Epoch: {}({:.0f}%)'.format(epoch, 100.)]}
         logger.append(info, 'test', mean=False)
-        print(logger.write('test', metric.metric_name['test']))
+        print(logger.write('test', metric.metric_name['test']), flush=True)
     logger.safe(False)
     return
 

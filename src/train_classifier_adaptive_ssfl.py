@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser(description='cfg')
 for k in cfg:
     exec('parser.add_argument(\'--{0}\', default=cfg[\'{0}\'], type=type(cfg[\'{0}\']))'.format(k))
 parser.add_argument('--control_name', default=None, type=str)
+parser.add_argument('--config_file', default=None, type=str)
 
 args = vars(parser.parse_args())
 process_args(args)
@@ -27,6 +28,8 @@ process_args(args)
 
 def main():
     process_control()
+    for k, v in cfg.items():
+        print(k, ':', v)
     seeds = list(range(cfg['init_seed'], cfg['init_seed'] + cfg['num_experiments']))
     for i in range(cfg['num_experiments']):
         model_tag_list = [str(seeds[i]), cfg['data_name'], cfg['model_name'], cfg['control_name']]
