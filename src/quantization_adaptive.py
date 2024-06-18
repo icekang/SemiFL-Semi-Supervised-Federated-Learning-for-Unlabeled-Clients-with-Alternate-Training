@@ -47,7 +47,7 @@ def runExperiment():
     test_model.to('cpu')
     cfg['device'] = 'cpu'
     print('Before quantization:')
-    test(data_loader['test'], test_model, metric, test_logger, last_epoch)
+    test(data_loader['test'], test_model, metric, test_logger, last_epoch, profiler_suffix='before_quantization')
     
     test_model.to('cuda:0')
     cfg['device'] = 'cuda:0'
@@ -57,7 +57,7 @@ def runExperiment():
     test_model.to('cpu')
     cfg['device'] = 'cpu'
     print('After quantization:')
-    test(data_loader['test'], test_model, metric, test_logger, last_epoch)
+    test(data_loader['test'], test_model, metric, test_logger, last_epoch, profiler_suffix='after_quantization')
     test_logger.safe(False)
     result = resume(cfg['model_tag'], load_tag='checkpoint')
     train_logger = result['logger'] if 'logger' in result else None
@@ -66,23 +66,33 @@ def runExperiment():
     save(result, './output/result/{}.pt'.format(cfg['model_tag']))
     return
 
-def test(data_loader, model, metric, logger, epoch):
+def test(data_loader, model, metric, logger, epoch, profiler_suffix=''):
     print('Test Epoch: {}'.format(epoch))
     from tqdm import tqdm
-    with torch.no_grad():
-        model.train(False)
-        for i, input in tqdm(enumerate(data_loader), total=len(data_loader), desc='Testing'):
-            input = collate(input)
-            input_size = input['data'].size(0)
-            input = to_device(input, cfg['device'])
-            print('input device:', input['data'].device)
-            output = model(input)
-            output['loss'] = output['loss'].mean() if cfg['world_size'] > 1 else output['loss']
-            evaluation = metric.evaluate(metric.metric_name['test'], input, output)
-            logger.append(evaluation, 'test', input_size)
-        info = {'info': ['Model: {}'.format(cfg['model_tag']), 'Test Epoch: {}({:.0f}%)'.format(epoch, 100.)]}
-        logger.append(info, 'test', mean=False)
-        print(logger.write('test', metric.metric_name['test']), flush=True)
+    with torch.profiler.profile(
+        schedule=torch.profiler.schedule(
+            wait=2,
+            warmup=2,
+            active=6,
+            repeat=1),
+        profile_memory=True,
+        on_trace_ready=torch.profiler.tensorboard_trace_handler(f'./log/adaptive_{profiler_suffix}'),
+        with_stack=True
+    ) as profiler:
+        with torch.no_grad():
+            model.train(False)
+            for i, input in tqdm(enumerate(data_loader), total=len(data_loader), desc='Testing'):
+                input = collate(input)
+                input_size = input['data'].size(0)
+                input = to_device(input, cfg['device'])
+                output = model(input)
+                output['loss'] = output['loss'].mean() if cfg['world_size'] > 1 else output['loss']
+                evaluation = metric.evaluate(metric.metric_name['test'], input, output)
+                logger.append(evaluation, 'test', input_size)
+                profiler.step()
+            info = {'info': ['Model: {}'.format(cfg['model_tag']), 'Test Epoch: {}({:.0f}%)'.format(epoch, 100.)]}
+            logger.append(info, 'test', mean=False)
+            print(logger.write('test', metric.metric_name['test']), flush=True)
     return
 
 def main():
