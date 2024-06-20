@@ -240,13 +240,14 @@ def make_dataset_normal(dataset):
 
 
 def make_batchnorm_stats(dataset, model, tag):
+    from tqdm import tqdm
     with torch.no_grad():
         test_model = copy.deepcopy(model)
         test_model.apply(lambda m: models.make_batchnorm(m, momentum=None, track_running_stats=True))
         dataset, _transform = make_dataset_normal(dataset)
         data_loader = make_data_loader({'train': dataset}, tag, shuffle={'train': False})['train']
         test_model.train(True)
-        for i, input in enumerate(data_loader):
+        for i, input in tqdm(enumerate(data_loader), total=len(data_loader), desc='BatchNorm Stats'):
             input = collate(input)
             input = to_device(input, cfg['device'])
             test_model(input)

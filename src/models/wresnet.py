@@ -19,8 +19,10 @@ class BasicBlock(nn.Module):
                                padding=1, bias=False)
         self.drop_rate = drop_rate
         self.equal_inout = (in_planes == out_planes)
-        self.shortcut = (not self.equal_inout) and nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
-                                                             padding=0, bias=False) or None
+        self.shortcut = None
+        if not self.equal_inout:
+            self.shortcut = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, padding=0, bias=False)
+        self.f_add = nn.quantized.FloatFunctional()
 
     def forward(self, x):
         if not self.equal_inout:
@@ -31,7 +33,10 @@ class BasicBlock(nn.Module):
         if self.drop_rate > 0:
             out = F.dropout(out, p=self.drop_rate, training=self.training)
         out = self.conv2(out)
-        out = torch.add(x if self.equal_inout else self.shortcut(x), out)
+        if self.equal_inout:
+            out = self.f_add.add(out, x)
+        else:
+            out = self.f_add.add(out, self.shortcut(x))
         return out
 
 
@@ -54,6 +59,8 @@ class NetworkBlock(nn.Module):
 class WideResNet(nn.Module):
     def __init__(self, data_shape, num_classes, depth, widen_factor, drop_rate):
         super().__init__()
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
         num_down = int(min(math.log2(data_shape[1]), math.log2(data_shape[2]))) - 3
         hidden_size = [16]
         for i in range(num_down + 1):
@@ -73,8 +80,10 @@ class WideResNet(nn.Module):
         self.classifier = nn.Linear(hidden_size[-1], num_classes)
 
     def f(self, x):
+        x = self.quant(x)
         x = self.blocks(x)
         x = self.classifier(x)
+        x = self.dequant(x)
         return x
 
     def forward(self, input):
